@@ -1,0 +1,76 @@
+# Configuración de Recursos en Foundry para la creación de un agente de atención en IBERO Puebla
+
+# Inicio de Sesión en Azure
+az login
+
+# Creación de un proyecto en Foundry
+az group create --name IBEROchatbot-rg --location eastus2
+
+# Creación de un recurso en Foundry
+az cognitiveservices account create --name IBEROchatbot-resource \
+--resource-group IBEROchatbot-rg \
+--kind AIServices \
+--sku s0 \
+--location eastus2
+--allow-project-management
+
+
+# Creacion de un subdominio para el recuros
+az cognitiveservices account update --name IBEROchatbot-resource \
+--resource-group IBEROchatbot-rg \
+--custom-domain ChatIBEROPuebla
+
+
+# Creación de un projecto para un agente de atención a clientes
+az cognitiveservices account project-create \
+--name IBEROchatbot-resource \
+--resource-group IBEROchatbot-rg \
+--project-name IBEROchatbot-project \
+--location eastus2
+
+# Comprobación de la creación del projecto
+az cognitiveservices account project show \
+--name IBEROchatbot-resource \
+--resource-group IBEROchatbot-rg \
+--project-name IBEROchatbot-project
+
+
+# Verificación de modelos disponibles
+az cognitiveservices account list-models --name IBEROchatbot-resource --resource-group IBEROchatbot-rg --output table
+
+# Implementación de un modelo
+az cognitiveservices account deployment \
+create --name IBEROchatbot-resource \
+--resource-group IBEROchatbot-rg \
+--deployment-name gpt-4o-deployment \
+--model-name gpt-4o \
+--model-version "2024-11-20" \
+--model-format OpenAI \
+--sku-capacity 1 \
+--sku-name Standard
+
+# Comprobación de la implementación del modelo
+az cognitiveservices account deployment show \
+--name IBEROchatbot-resource \
+--resource-group IBEROchatbot-rg \
+--deployment-name gpt-4o-deploy
+
+# project_endpoint  = "https://chatiberopuebla.services.ai.azure.com/api/projects/IBEROchatbot-project"
+
+# Obtención del identificardor de recursos del proyecto
+$PROJECT_ID=(az cognitiveservices account project show \
+--name IBEROchatbot-resource \
+--resource-group IBEROchatbot-rg \
+--project-name IBEROchatbot-project \
+--query id -o tsv)
+
+
+# Invitación a usuario al directorio de Azurem| Revisar
+az externaluser create --diplay-name "Usuario Chatbot" --email "persebe5096@gmail.com"
+
+
+# Asignación de rol Azure AI User a un miembro del equipo
+az role assignment create \ --role "Azure AI User" 
+--assignee "persebe5096@gmail.com" \
+--scope $PROJECT_ID 
+
